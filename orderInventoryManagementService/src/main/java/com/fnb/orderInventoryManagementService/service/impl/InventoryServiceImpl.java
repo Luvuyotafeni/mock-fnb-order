@@ -1,5 +1,6 @@
 package com.fnb.orderInventoryManagementService.service.impl;
 
+import com.fnb.orderInventoryManagementService.dto.InventoryRequest;
 import com.fnb.orderInventoryManagementService.dto.InventoryResponse;
 import com.fnb.orderInventoryManagementService.entity.Inventory;
 import com.fnb.orderInventoryManagementService.repository.InventoryRepository;
@@ -49,6 +50,22 @@ public class InventoryServiceImpl implements InventoryService {
             log.warn("Insufficient stock for product {}. Requested: {}, Available: {}",
                     productId, quantity, inv.getQuantity());
         }
+    }
+
+    @Override
+    public InventoryResponse createInventory(InventoryRequest request) {
+        if (inventoryRepository.findByProductId(request.getProductId()).isPresent()) {
+            throw new RuntimeException("Product already exists: " + request.getProductId());
+        }
+
+        Inventory inv = Inventory.builder()
+                .productId(request.getProductId())
+                .quantity(request.getQuantity())
+                .build();
+
+        inv = inventoryRepository.save(inv);
+        log.info("Created inventory for product {} with quantity {}", inv.getProductId(), inv.getQuantity());
+        return toResponse(inv);
     }
 
     private InventoryResponse toResponse(Inventory inv) {
