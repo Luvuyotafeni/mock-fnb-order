@@ -1,12 +1,14 @@
 package com.fnb.paymentService.service;
 
-import com.microservices.paymentservice.dto.OrderEvent;
-import com.microservices.paymentservice.dto.PaymentResponse;
+import com.fnb.paymentService.dto.OrderEvent;
+import com.fnb.paymentService.dto.PaymentRequest;
+import com.fnb.paymentService.dto.PaymentResponse;
 
 import java.util.List;
 
 public interface PaymentService {
-    void processPayment(OrderEvent event);
+    void createPendingPayment(OrderEvent event);
+    PaymentResponse pay(Long orderId, PaymentRequest request);
     List<PaymentResponse> getAllPayments();
     PaymentResponse getPaymentByOrderId(Long orderId);
 }

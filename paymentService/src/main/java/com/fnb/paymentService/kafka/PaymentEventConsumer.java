@@ -1,8 +1,8 @@
 package com.fnb.paymentService.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.microservices.paymentservice.dto.OrderEvent;
-import com.microservices.paymentservice.service.PaymentService;
+import com.fnb.paymentService.dto.OrderEvent;
+import com.fnb.paymentService.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +22,6 @@ public class PaymentEventConsumer {
     public void consumeOrderCreatedEvent(String message) {
         log.info("Payment service received order-created event: {}", message);
         OrderEvent event = objectMapper.readValue(message, OrderEvent.class);
-        paymentService.processPayment(event);
+        paymentService.createPendingPayment(event); // ← changed from processPayment
     }
 }

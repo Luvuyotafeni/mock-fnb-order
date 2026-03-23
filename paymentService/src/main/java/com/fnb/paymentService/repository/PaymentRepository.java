@@ -1,6 +1,6 @@
 package com.fnb.paymentService.repository;
 
-import com.microservices.paymentservice.entity.Payment;
+import com.fnb.paymentService.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

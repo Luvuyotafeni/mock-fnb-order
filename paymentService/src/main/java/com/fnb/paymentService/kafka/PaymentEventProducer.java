@@ -1,7 +1,7 @@
 package com.fnb.paymentService.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.microservices.paymentservice.dto.PaymentResultEvent;
+import com.fnb.paymentService.dto.PaymentResultEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

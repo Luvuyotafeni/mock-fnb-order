@@ -1,11 +1,6 @@
 package com.fnb.paymentService.entity;
-
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -25,12 +20,17 @@ public class Payment {
     private String productId;
     private Integer quantity;
 
-    private String status; // APPROVED or DECLINED
+    private String cardHolderName;
+    private String maskedCardNumber; // we only store last 4 digits
 
+    private String status; // PENDING, APPROVED, DECLINED
+
+    private LocalDateTime createdAt;
     private LocalDateTime processedAt;
 
     @PrePersist
     protected void onCreate() {
-        processedAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now();
+        status = "PENDING";
     }
 }
