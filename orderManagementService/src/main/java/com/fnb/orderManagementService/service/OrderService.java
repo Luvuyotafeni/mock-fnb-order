@@ -9,4 +9,5 @@ public interface OrderService {
     OrderResponse createOrder(OrderRequest request);
     List<OrderResponse> getAllOrders();
     OrderResponse getOrderById(Long id);
+    void updateOrderStatus(Long orderId, String paymentStatus);
 }

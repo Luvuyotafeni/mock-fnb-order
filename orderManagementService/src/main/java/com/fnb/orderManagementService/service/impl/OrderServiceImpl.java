@@ -55,6 +55,15 @@ public class OrderServiceImpl implements OrderService {
         return toResponse(order);
     }
 
+    @Override
+    public void updateOrderStatus(Long orderId, String paymentStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+        String newStatus = paymentStatus.equals("APPROVED") ? "COMPLETED" : "PAYMENT_DECLINED";
+        order.setStatus(newStatus);
+        orderRepository.save(order);
+    }
+
     private OrderResponse toResponse(Order order) {
         return new OrderResponse(
                 order.getId(),

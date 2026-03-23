@@ -1,0 +1,36 @@
+package com.fnb.paymentService.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "payments")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Payment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private Long orderId;
+    private String customerId;
+    private String productId;
+    private Integer quantity;
+
+    private String status; // APPROVED or DECLINED
+
+    private LocalDateTime processedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        processedAt = LocalDateTime.now();
+    }
+}
