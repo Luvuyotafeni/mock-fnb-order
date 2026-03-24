@@ -1,0 +1,375 @@
+# ============================================================
+# NAMESPACE
+# ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: java-microservices
+---
+# ============================================================
+# MYSQL — ConfigMap + Deployment + Service
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-config
+  namespace: java-microservices
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS userdb;
+    CREATE DATABASE IF NOT EXISTS orderdb;
+    CREATE DATABASE IF NOT EXISTS inventorydb;
+    CREATE DATABASE IF NOT EXISTS paymentdb;
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: java-microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "root"
+          volumeMounts:
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+          readinessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+      volumes:
+        - name: init-sql
+          configMap:
+            name: mysql-init-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: java-microservices
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+---
+# ============================================================
+# USER SERVICE — Deployment + NodePort Service (30001)
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: java-microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: java-user-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-service:3306/userdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "root"
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "update"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka-service:9092"
+            - name: JWT_SECRET
+              value: "mySecretKey12345678901234567890123456789012"
+            - name: JWT_EXPIRATION
+              value: "86400000"
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            failureThreshold: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: java-microservices
+spec:
+  type: NodePort
+  selector:
+    app: user-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+      nodePort: 30001
+---
+# ============================================================
+# ORDER SERVICE — Deployment + NodePort Service (30002)
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: java-microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+        - name: order-service
+          image: java-order-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-service:3306/orderdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "root"
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "update"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka-service:9092"
+            - name: JWT_SECRET
+              value: "mySecretKey12345678901234567890123456789012"
+            - name: JWT_EXPIRATION
+              value: "86400000"
+          readinessProbe:
+            tcpSocket:
+              port: 8082
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            failureThreshold: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: java-microservices
+spec:
+  type: NodePort
+  selector:
+    app: order-service
+  ports:
+    - port: 8082
+      targetPort: 8082
+      nodePort: 30002
+---
+# ============================================================
+# INVENTORY SERVICE — Deployment + NodePort Service (30003)
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-service
+  namespace: java-microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventory-service
+  template:
+    metadata:
+      labels:
+        app: inventory-service
+    spec:
+      containers:
+        - name: inventory-service
+          image: java-inventory-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-service:3306/inventorydb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "root"
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "update"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka-service:9092"
+            - name: JWT_SECRET
+              value: "mySecretKey12345678901234567890123456789012"
+            - name: JWT_EXPIRATION
+              value: "86400000"
+          readinessProbe:
+            tcpSocket:
+              port: 8083
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            failureThreshold: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+  namespace: java-microservices
+spec:
+  type: NodePort
+  selector:
+    app: inventory-service
+  ports:
+    - port: 8083
+      targetPort: 8083
+      nodePort: 30003
+---
+# ============================================================
+# PAYMENT SERVICE — Deployment + NodePort Service (30004)
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: java-microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: java-payment-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8084
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-service:3306/paymentdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "root"
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "update"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka-service:9092"
+            - name: JWT_SECRET
+              value: "mySecretKey12345678901234567890123456789012"
+            - name: JWT_EXPIRATION
+              value: "86400000"
+          readinessProbe:
+            tcpSocket:
+              port: 8084
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            failureThreshold: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: java-microservices
+spec:
+  type: NodePort
+  selector:
+    app: payment-service
+  ports:
+    - port: 8084
+      targetPort: 8084
+      nodePort: 30004
+
+---
+# ============================================================
+# kafka configs
+# ============================================================
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kafka-pod
+  labels:
+    app: kafka-pod
+  namespace: java-microservices
+spec:
+  containers:
+    - name: kafka
+      image: confluentinc/cp-kafka
+      ports:
+        - containerPort: 9092
+        - containerPort: 9093
+      env:
+        - name: KAFKA_KRAFT_MODE
+          value: "true"
+        - name: CLUSTER_ID
+          value: "jhguyhnoijmcoi"
+        - name: KAFKA_NODE_ID
+          value: "1"
+        - name: KAFKA_PROCESS_ROLES
+          value: "broker,controller"
+        # Changed to localhost since the controller and broker are in the same pod
+        - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+          value: "1@localhost:9093"
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "1"
+        - name: KAFKA_LISTENERS
+          value: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+        # This tells the Spring app to connect via localhost
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://kafka-service:9092"
+        - name: KAFKA_CONTROLLER_LISTENER_NAMES
+          value: "CONTROLLER"
+        - name: KAFKA_LOG_DIRS
+          value: "/var/lib/kafka/data"
+      volumeMounts:
+        - name: kafka-kraft
+          mountPath: /var/lib/kafka/data
+  volumes:
+    - name: kafka-kraft
+      emptyDir: {}
+
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+  namespace: java-microservices
+spec:
+  selector:
+    app: kafka-pod
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: 9092
