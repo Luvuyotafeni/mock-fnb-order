@@ -1,21 +1,49 @@
-server:
+#server:
+#  port: 8083
+#
+#spring:
+#  application:
+#    name: inventory-service
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/inventorydb
+#    username: root
+#    password: 1234
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+#    database-platform: org.hibernate.dialect.MySQLDialect
+#  kafka:
+#    bootstrap-servers: localhost:9092
+#
+#jwt:
+#  secret: mySecretKey12345678901234567890123456789012
+
+
+
+
+`server:
   port: 8083
 
 spring:
   application:
     name: inventory-service
+
   datasource:
-    url: jdbc:mysql://localhost:3306/inventorydb
-    username: root
-    password: 1234
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://localhost:5432/inventorydb
+    username: postgres
+    password: 12345
+    driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: true
-    database-platform: org.hibernate.dialect.MySQLDialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
   kafka:
     bootstrap-servers: localhost:9092
 
 jwt:
-  secret: mySecretKey12345678901234567890123456789012
+  secret: mySecretKey12345678901234567890123456789012`
